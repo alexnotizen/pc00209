@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BÀI 9 – NGỮ PHÁP - Flashcard</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh; font-family:Arial,"Microsoft YaHei",sans-serif;
+  background:#fdfbf7;
+  display:flex; justify-content:center; color:#202124;
+}
+.app{width:min(860px,96vw); padding:30px 0 40px}
+h1{text-align:center;margin:0 0 15px;font-size:38.4px; font-weight: bold;}
+.progress{text-align:center;font-size:21.6px;color:#444;margin-bottom:20px; font-weight: bold;}
+.card-wrap{perspective:1200px; cursor:pointer}
+.card{
+  width:100%; height:592px; position:relative; transform-style:preserve-3d;
+  transition:transform .55s ease;
+}
+.card.flipped{transform:rotateY(180deg)}
+.face{
+  position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  border-radius:24px; background:white; box-shadow:0 15px 45px rgba(0,0,0,.15);
+  display:flex; flex-direction:column; padding:36px; border:3px solid #eee; overflow-y:auto;
+}
+.front{justify-content:flex-start; align-items:flex-start; text-align:left}
+.back{transform:rotateY(180deg); text-align:left; align-items:flex-start; justify-content:flex-start; padding-top:40px;}
+
+.hl{color: #7c2d12; font-weight: bold; background-color: #fef08a; padding: 2px 6px; border-radius: 4px; border: 1px solid #eab308;}
+.hl-blue { color: #ffffff; font-weight: bold; background-color: #2563eb; padding: 2px 6px; border-radius: 4px; }
+.hl-red { color: #dc2626; font-weight: bold; }
+
+/* Pinyin mặt trước: căn giữa */
+.pinyin{
+  font-size:1.68em;
+  color:#666666;
+  margin-bottom:10px;
+  font-weight:bold;
+  text-align:center;
+  width:100%;
+}
+
+.zh-front { font-size: 2.16em; font-weight: bold; margin-bottom: 6px; line-height: 1.3; color: #dc2626; text-align: center; width: 100%; }
+
+/* Mặt sau */
+.zh-back { color: #2563eb; font-weight: bold; font-size: 1.74em; line-height: 1.2; display: inline-block; margin-top: 8px; margin-bottom: 2px; }
+.pinyin-back { color: #666666; font-weight: bold; font-size: 1.2em; display: block; margin: 2px 0; }
+.vi-back { font-size: 1.2em; color: #333; display: block; margin-bottom: 10px; }
+
+.desc-front { font-size: 1.38em; color: #333; margin: 8px 0; text-align: left; width: 100%; line-height: 1.4; }
+.desc{font-size: 1.38em; color: #333; margin: 0; text-align: left; width: 100%; line-height: 1.4;}
+
+.controls{display:flex;gap:20px;justify-content:center;margin-top:30px}
+button{
+  border:0;border-radius:20px;padding:20px 35px;font-size:26.4px;
+  cursor:pointer;background:#e9eef7;color:#233044; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,.1);
+}
+button.primary{background:#2563eb;color:white}
+</style>
+</head>
+
+<body>
+<div class="app">
+  <h1 id="title">BÀI 9 – NGỮ PHÁP</h1>
+  <div class="progress" id="progress"></div>
+
+  <div class="card-wrap" id="cardWrap" onclick="flipCard()">
+    <div class="card" id="card">
+      <div class="face front" id="frontFace"></div>
+      <div class="face back" id="backFace"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button onclick="event.stopPropagation();prevCard()">← TRƯỚC</button>
+    <button class="primary" onclick="event.stopPropagation();flipCard()">LẬT THẺ</button>
+    <button onclick="event.stopPropagation();nextCard()">TIẾP →</button>
+  </div>
+</div>
+
+<script>
+const cards = [
+  {
+    f: "<div class='zh-front'>HAY LÀ, NẾU KHÔNG THÌ</div>" +
+       "<div class='zh-front'><span style='background-color: #2563eb; color: #ffffff; padding: 2px 6px; border-radius: 4px;'>要不</span></div>" +
+       "<div class='pinyin'>yàobù</div>" +
+       "<div class='desc-front'>" +
+       "Dùng khi muốn phủ định tình huống đã nói trước đó, đưa ra kết quả nếu tình huống đó không xảy ra (giống như nếu không làm vậy thì…). Ngoài ra, 要不 còn dùng để đưa ra lựa chọn hoặc gợi ý (hay là… nhé, không thì… nhé)." +
+       "</div>",
+    b: "<div class='desc' style='line-height:1.5;'>" +
+       "<span class='zh-back'>这么晚了，赶快回家吧，要不家里会不放心的。</span><br><span class='pinyin-back'>Zhème wǎn le, gǎnkuài huíjiā ba, yàobù jiālì huì bú fàngxīn de.</span><span class='vi-back'>(Nếu không mau về nhà, người nhà sẽ lo lắng.)</span>" +
+       "<span class='zh-back'>赶快走，要不就赶不上火车了。</span><br><span class='pinyin-back'>Gǎnkuài zǒu, yàobù jiù gǎn bu shàng huǒchē le.</span><span class='vi-back'>(Nếu không nhanh đi, sẽ không kịp tàu.)</span>" +
+       "<span class='zh-back'>你来接我太好了，要不我一个人怎么拿这些行李呀？</span><br><span class='pinyin-back'>Nǐ lái jiē wǒ tài hǎo le, yàobù wǒ yí gè rén zěnme ná zhèxiē xíngli ya?</span><span class='vi-back'>(Nếu bạn không đến đón, một mình tôi sao xách hết đống hành lý này được.)</span>" +
+       "<span class='zh-back'>要不7块（钱)吧，我买俩。</span><br><span class='pinyin-back'>Yàobù qī kuài (qián) ba, wǒ mǎi liǎ.</span><span class='vi-back'>(Hay là 7 tệ nhé, tôi mua hai cái.)</span>" +
+       "<span class='zh-back'>吃饺子太麻烦了，要不吃面条儿吧。</span><br><span class='pinyin-back'>Chī jiǎozi tài máfan le, yàobù chī miàntiáor ba.</span><span class='vi-back'>(Ăn sủi cảo phiền quá, hay là ăn mì đi.)</span>" +
+       "<span class='zh-back'>已经12点了，要不你今天就在我家住吧。</span><br><span class='pinyin-back'>Yǐjīng shí'èr diǎn le, yàobù nǐ jīntiān jiù zài wǒ jiā zhù ba.</span><span class='vi-back'>(Đã 12 giờ rồi, hay là hôm nay bạn ở nhà tôi luôn đi.)</span>" +
+       "<span class='zh-back'>学外语应该学了就用，要不很快就忘了。</span><br><span class='pinyin-back'>Xué wàiyǔ yīnggāi xué le jiù yòng, yàobù hěn kuài jiù wàng le.</span><span class='vi-back'>(Học ngoại ngữ nên học là dùng ngay, nếu không thì sẽ mau quên.)</span>" +
+       "<span class='zh-back'>上课别迟到，要不老师会生气的。</span><br><span class='pinyin-back'>Shàngkè bié chídào, yàobù lǎoshī huì shēngqì de.</span><span class='vi-back'>(Đừng đi học muộn, nếu không thầy giáo sẽ giận.)</span>" +
+       "<span class='zh-back'>学习汉语一定要学好发音，要不以后很难改。</span><br><span class='pinyin-back'>Xuéxí Hànyǔ yídìng yào xué hǎo fāyīn, yàobù yǐhòu hěn nán gǎi.</span><span class='vi-back'>(Học tiếng Trung nhất định phải học tốt phát âm, nếu không sau này rất khó sửa.)</span>" +
+       "<span class='zh-back'>有不明白的地方一定要问，要不永远不会明白。</span><br><span class='pinyin-back'>Yǒu bù míngbai de dìfang yídìng yào wèn, yàobù yǒngyuǎn bú huì míngbai.</span><span class='vi-back'>(Có chỗ không hiểu nhất định phải hỏi, nếu không thì mãi mãi không hiểu.)</span>" +
+       "<span class='zh-back'>晚上早点睡，要不明天没有精神。</span><br><span class='pinyin-back'>Wǎnshang zǎodiǎn shuì, yàobù míngtiān méiyǒu jīngshén.</span><span class='vi-back'>(Buổi tối ngủ sớm một chút, nếu không ngày mai sẽ không có tinh thần.)</span>" +
+       "</div>"
+  },
+  {
+    f: "<div class='zh-front'>VỪA HAY, VỪA ĐÚNG</div>" +
+       "<div class='zh-front'><span style='background-color: #2563eb; color: #ffffff; padding: 2px 6px; border-radius: 4px;'>正好</span></div>" +
+       "<div class='pinyin'>zhènghǎo</div>" +
+       "<div class='desc-front'>" +
+       "1. Làm phó từ: vừa đúng lúc, thật trùng hợp (sự việc xảy ra đúng thời điểm, không sớm không muộn).<br>" +
+       "2. Làm tính từ: thời gian, số lượng, kích thước, vị trí… rất phù hợp, vừa vặn." +
+       "</div>",
+    b: "<div class='desc' style='line-height:1.5;'>" +
+       "<span class='zh-back'>想找个人陪我去逛逛商店，正好你来了。</span><br><span class='pinyin-back'>Xiǎng zhǎo gè rén péi wǒ qù guàngguang shāngdiàn, zhènghǎo nǐ lái le.</span><span class='vi-back'>(Đang muốn tìm người đi dạo cửa hàng cùng, vừa hay bạn đến.)</span>" +
+       "<span class='zh-back'>李钟文坐在操场旁边看书，一个篮球正好打在他头上。</span><br><span class='pinyin-back'>Lǐ Zhōngwén zuò zài cāochǎng pángbiān kàn shū, yí gè lánqiú zhènghǎo dǎ zài tā tóu shang.</span><span class='vi-back'>(Lý Chung Văn ngồi bên sân vận động đọc sách, một quả bóng rổ vừa đúng đập vào đầu anh ấy.)</span>" +
+       "<span class='zh-back'>老王走进办公室的时候正好8点。</span><br><span class='pinyin-back'>Lǎo Wáng zǒu jìn bàngōngshì de shíhou zhènghǎo bā diǎn.</span><span class='vi-back'>(Lúc ông Vương bước vào văn phòng vừa đúng 8 giờ.)</span>" +
+       "<span class='zh-back'>您看，不多不少，正好两斤。</span><br><span class='pinyin-back'>Nín kàn, bù duō bù shǎo, zhènghǎo liǎng jīn.</span><span class='vi-back'>(Bạn xem, không nhiều không ít, vừa đúng hai cân.)</span>" +
+       "<span class='zh-back'>43号的鞋，我穿正好。</span><br><span class='pinyin-back'>Sìshísān hào de xié, wǒ chuān zhènghǎo.</span><span class='vi-back'>(Giày số 43, tôi đi vừa đúng.)</span>" +
+       "<span class='zh-back'>他们说话的时候，爱珍正好听见了。</span><br><span class='pinyin-back'>Tāmen shuōhuà de shíhou, Àizhēn zhènghǎo tīngjiàn le.</span><span class='vi-back'>(Lúc họ nói chuyện, Ái Trân vừa hay nghe thấy.)</span>" +
+       "<span class='zh-back'>大同的云冈石窟怎么样？——正好我不太清楚，你可以问望月。</span><br><span class='pinyin-back'>Dàtóng de Yúngāng shíkū zěnmeyang? —— Zhènghǎo wǒ bú tài qīngchu, nǐ kěyǐ wèn Wàngyuè.</span><span class='vi-back'>(Đại Đồng Vân Cương thạch động thế nào? — Vừa hay tôi không rõ lắm, bạn có thể hỏi Vọng Nguyệt.)</span>" +
+       "<span class='zh-back'>老师刚才说什么？——正好我也不知道。</span><br><span class='pinyin-back'>Lǎoshī gāngcái shuō shénme? —— Zhènghǎo wǒ yě bù zhīdào.</span><span class='vi-back'>(Thầy giáo vừa nói gì? — Vừa hay tôi cũng không biết.)</span>" +
+       "</div>"
+  },
+  {
+    f: "<div class='zh-front'>ƯỚC CHỪNG, HƠN...</div>" +
+       "<div class='zh-front'>Số từ / Lượng từ + <span style='background-color: #2563eb; color: #ffffff; padding: 2px 6px; border-radius: 4px;'>多</span></div>" +
+       "<div class='pinyin'>... duō</div>" +
+       "<div class='desc-front'>" +
+       "Khi 多 đứng sau số từ hoặc lượng từ, nó biểu thị một con số ước chừng, không chính xác, thường là hơn một chút." +
+       "</div>",
+    b: "<div class='desc' style='line-height:1.5;'>" +
+       "<span class='zh-back'>我们已经学了一百多个生词了。</span><br><span class='pinyin-back'>Wǒmen yǐjīng xué le yì bǎi duō gè shēngcí le.</span><span class='vi-back'>(Chúng tôi đã học hơn một trăm từ mới rồi.)</span>" +
+       "<span class='zh-back'>老董吃涮羊肉，一顿能吃二斤多。</span><br><span class='pinyin-back'>Lǎo Dǒng chī shuàn yángròu, yí dùn néng chī èr jīn duō.</span><span class='vi-back'>(Ông Đổng ăn thịt cừu nhúng, một bữa ăn được hơn hai cân.)</span>" +
+       "<span class='zh-back'>今年的产量比去年增加了一倍多。</span><br><span class='pinyin-back'>Jīnnián de chǎnliàng bǐ qùnián zēngjiā le yí bèi duō.</span><span class='vi-back'>(Sản lượng năm nay tăng hơn gấp đôi so với năm ngoái.)</span>" +
+       "</div>"
+  },
+  {
+    f: "<div class='zh-front'>NGHE NÓI</div>" +
+       "<div class='zh-front'><span style='background-color: #2563eb; color: #ffffff; padding: 2px 6px; border-radius: 4px;'>听说</span></div>" +
+       "<div class='pinyin'>tīngshuō</div>" +
+       "<div class='desc-front'>" +
+       "Có nghĩa là nghe người khác nói, dùng để giới thiệu một nguồn tin mà mình nghe được, có thể chắc chắn hoặc không chắc chắn." +
+       "</div>",
+    b: "<div class='desc' style='line-height:1.5;'>" +
+       "<span class='zh-back'>听说这家商店正在大减价，咱们去看看吧。</span><br><span class='pinyin-back'>Tīngshuō zhè jiā shāngdiàn zhèngzài dà jiǎnjià, zánmen qù kànkan ba.</span><span class='vi-back'>(Nghe nói cửa hàng này đang giảm giá lớn, chúng ta đi xem thử đi.)</span>" +
+       "<span class='zh-back'>这个周末有很多电影明星要来咱们学校，你听说了吗？</span><br><span class='pinyin-back'>Zhè gè zhōumò yǒu hěn duō diànyǐng míngxīng yào lái zánmen xuéxiào, nǐ tīngshuō le ma?</span><span class='vi-back'>(Cuối tuần này có nhiều ngôi sao điện ảnh sẽ đến trường chúng ta, bạn nghe nói chưa?)</span>" +
+       "<span class='zh-back'>你知道哪儿可以游泳吗？——听说飞龙可能知道。</span><br><span class='pinyin-back'>Nǐ zhīdào nǎr kěyǐ yóuyǒng ma? —— Tīngshuō Fēilóng kěnéng zhīdào.</span><span class='vi-back'>(Bạn biết chỗ nào bơi được không? — Nghe nói Phi Long có thể biết.)</span>" +
+       "<span class='zh-back'>听说一个朋友告诉他……</span><br><span class='pinyin-back'>Tīngshuō yí gè péngyou gàosù tā...</span><span class='vi-back'>(Nghe nói một người bạn nói với anh ấy…)</span>" +
+       "</div>"
+  },
+  {
+    f: "<div class='zh-front'>KHÔNG CẦN</div>" +
+       "<div class='zh-front'><span style='background-color: #2563eb; color: #ffffff; padding: 2px 6px; border-radius: 4px;'>不用</span></div>" +
+       "<div class='pinyin'>búyòng</div>" +
+       "<div class='desc-front'>" +
+       "Có nghĩa giống như 别, 不要, 不必 hoặc 不需要, dùng để diễn tả không cần thiết phải làm gì đó.<br>" +
+       "Chú ý: Trong cách dùng này, 用 thường không dùng trong câu khẳng định, mà hay dùng trong câu hỏi hoặc câu hỏi tu từ." +
+       "</div>",
+    b: "<div class='desc' style='line-height:1.5;'>" +
+       "<span class='zh-back'>我自己的事不用别人管。</span><br><span class='pinyin-back'>Wǒ zìjǐ de shì bú yòng biérén guǎn.</span><span class='vi-back'>(Việc của tôi không cần người khác quản.)</span>" +
+       "<span class='zh-back'>你不用为了这么一点儿小事生气。</span><br><span class='pinyin-back'>Nǐ bú yòng wèile zhème yìdiǎnr xiǎoshì shēngqì.</span><span class='vi-back'>(Bạn không cần phải tức giận vì một chuyện nhỏ như vậy.)</span>" +
+       "<span class='zh-back'>我们这儿人手已经够了，不用请人帮忙了。</span><br><span class='pinyin-back'>Wǒmen zhèr rénshǒu yǐjīng gòu le, bú yòng qǐng rén bāngmáng le.</span><span class='vi-back'>(Chỗ chúng tôi đã đủ người rồi, không cần nhờ người giúp nữa.)</span>" +
+       "<span class='zh-back'>书我已经买到了，你不用帮我借了。</span><br><span class='pinyin-back'>Shū wǒ yǐjīng mǎi dào le, nǐ bú yòng bāng wǒ jiè le.</span><span class='vi-back'>(Sách tôi đã mua được rồi, bạn không cần giúp tôi mượn nữa.)</span>" +
+       "<span class='zh-back'>在走以前，我用不用给你打电话？</span><br><span class='pinyin-back'>Zài zǒu yǐqián, wǒ yòng bu yòng gěi nǐ dǎ diànhuà?</span><span class='vi-back'>(Trước khi đi, tôi có cần gọi điện cho bạn không?)</span>" +
+       "<span class='zh-back'>这还用说？我一定帮你办！</span><br><span class='pinyin-back'>Zhè hái yòng shuō? Wǒ yídìng bāng nǐ bàn!</span><span class='vi-back'>(Cái này còn phải nói sao? Tôi nhất định giúp bạn làm!)</span>" +
+       "<span class='zh-back'>要不，我下午再来一趟吧。——不用，可以打电话。</span><br><span class='pinyin-back'>Yàobù, wǒ xiàwǔ zài lái yí tàng ba. —— Bú yòng, kěyǐ dǎ diànhuà.</span><span class='vi-back'>(Hay là chiều tôi đến một chuyến nữa nhé. — Không cần, có thể gọi điện.)</span>" +
+       "<span class='zh-back'>这个练习要做吗？——不用，当然。</span><br><span class='pinyin-back'>Zhè gè liànxí yào zuò ma? —— Bú yòng, dāngrán.</span><span class='vi-back'>(Bài tập này có cần làm không? — Không cần, đương nhiên.)</span>" +
+       "<span class='zh-back'>明天的考试很容易，大家不用准备很长时间。</span><br><span class='pinyin-back'>Míngtiān de kǎoshì hěn róngyì, dàjiā bú yòng zhǔnbèi hěn cháng shíjiān.</span><span class='vi-back'>(Kỳ thi ngày mai rất dễ, mọi người không cần chuẩn bị lâu.)</span>" +
+       "</div>"
+  },
+  {
+    f: "<div class='zh-front'>KHÔNG BẰNG</div>" +
+       "<div class='zh-front'><span style='background-color: #2563eb; color: #ffffff; padding: 2px 6px; border-radius: 4px;'>不如</span></div>" +
+       "<div class='pinyin'>bùrú</div>" +
+       "<div class='desc-front'>" +
+       "Dùng để so sánh. Có 2 cách dùng cơ bản:<br>" +
+       "1. A不如B (A và B có thể là đại từ, danh từ, động từ hoặc cụm từ; ý nghĩa là B tốt hơn A).<br>" +
+       "2. A不如B + tính từ / động từ / cụm động từ." +
+       "</div>",
+    b: "<div class='desc' style='line-height:1.5;'>" +
+       "<span class='zh-back'>他们班不如我们班。</span><br><span class='pinyin-back'>Tāmen bān bùrú wǒmen bān.</span><span class='vi-back'>(Lớp họ không bằng lớp chúng tôi.)</span>" +
+       "<span class='zh-back'>他们的不如我的。</span><br><span class='pinyin-back'>Tāmen de bùrú wǒ de.</span><span class='vi-back'>(Cái của họ không bằng cái của tôi.)</span>" +
+       "<span class='zh-back'>奶奶的身体不如以前了。</span><br><span class='pinyin-back'>Nǎinai de shēntǐ bùrú yǐqián le.</span><span class='vi-back'>(Sức khỏe của bà không bằng trước đây.)</span>" +
+       "<span class='zh-back'>去近的地方，坐车不如骑车。</span><br><span class='pinyin-back'>Qù jìn de dìfang, zuò chē bùrú qíchē.</span><span class='vi-back'>(Đi chỗ gần, ngồi xe không bằng đi xe đạp.)</span>" +
+       "<span class='zh-back'>骑车不如坐车快。</span><br><span class='pinyin-back'>Qíchē bùrú zuò chē kuài.</span><span class='vi-back'>(Đi xe đạp không bằng ngồi xe nhanh.)</span>" +
+       "<span class='zh-back'>这个学期的学生不如上个学期多。</span><br><span class='pinyin-back'>Zhè gè xuéqī de xuésheng bùrú shàng gè xuéqī duō.</span><span class='vi-back'>(Học sinh học kỳ này không đông bằng học kỳ trước.)</span>" +
+       "<span class='zh-back'>这篇作文不如那篇写得好。</span><br><span class='pinyin-back'>Zhè piān zuòwén bùrú nà piān xiě de hǎo.</span><span class='vi-back'>(Bài văn này không bằng bài kia viết hay.)</span>" +
+       "<span class='zh-back'>今天的菜炒得不如昨天好。</span><br><span class='pinyin-back'>Jīntiān de cài chǎo de bùrú zuótiān hǎo.</span><span class='vi-back'>(Món ăn hôm nay xào không ngon bằng hôm qua.)</span>" +
+       "<span class='zh-back'>飞龙唱歌不如李钟文好。</span><br><span class='pinyin-back'>Fēilóng chànggē bùrú Lǐ Zhōngwén hǎo.</span><span class='vi-back'>(Phi Long hát không hay bằng Lý Chung Văn.)</span>" +
+       "<span class='zh-back'>那种西瓜不如这种甜。</span><br><span class='pinyin-back'>Nà zhǒng xīguā bùrú zhè zhǒng tián.</span><span class='vi-back'>(Loại dưa hấu kia không ngọt bằng loại này.)</span>" +
+       "<span class='zh-back'>班里其他学生说汉语不如爱珍流利。</span><br><span class='pinyin-back'>Bān lǐ qítā xuésheng shuō Hànyǔ bùrú Àizhēn liúlì.</span><span class='vi-back'>(Học sinh khác trong lớp nói tiếng Trung không lưu loát bằng Ái Trân.)</span>" +
+       "<span class='zh-back'>今天没课，在宿舍睡觉不如去图书馆看书。</span><br><span class='pinyin-back'>Jīntiān méi kè, zài sùshè shuìjiào bùrú qù túshūguǎn kàn shū.</span><span class='vi-back'>(Hôm nay không có tiết, ở ký túc xá ngủ không bằng đến thư viện đọc sách.)</span>" +
+       "<span class='zh-back'>以前中国人认为女孩儿不如男孩儿好，所以很多地方的人都喜欢生男孩儿。</span><br><span class='pinyin-back'>Yǐqián Zhōngguó rén rènwéi nǚháir bùrú nánháir hǎo, suǒyǐ hěn duō dìfang de rén dōu xǐhuan shēng nánháir.</span><span class='vi-back'>(Trước đây người Trung Quốc cho rằng con gái không tốt bằng con trai, nên nhiều nơi đều thích sinh con trai.)</span>" +
+       "<span class='zh-back'>我觉得北海公园的风景不如颐和园的美。</span><br><span class='pinyin-back'>Wǒ juéde Běihǎi gōngyuán de fēngjǐng bùrú Yíhéyuán de měi.</span><span class='vi-back'>(Tôi thấy phong cảnh công viên Bắc Hải không đẹp bằng Di Hòa Viên.)</span>" +
+       "</div>"
+  }
+];
+
+let idx = 0;
+
+function render() {
+  document.getElementById('frontFace').innerHTML = cards[idx].f;
+  document.getElementById('backFace').innerHTML = cards[idx].b;
+  document.getElementById('progress').innerText = `Thẻ ${idx + 1} / ${cards.length}`;
+}
+
+function flipCard() {
+  document.getElementById('card').classList.toggle('flipped');
+}
+
+function nextCard() {
+  idx = (idx + 1) % cards.length;
+  document.getElementById('card').classList.remove('flipped');
+  render();
+}
+
+function prevCard() {
+  idx = (idx - 1 + cards.length) % cards.length;
+  document.getElementById('card').classList.remove('flipped');
+  render();
+}
+
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+    nextCard();
+    event.preventDefault();
+  } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+    prevCard();
+    event.preventDefault();
+  } else if (event.key === ' ' || event.key === 'Enter') {
+    flipCard();
+    event.preventDefault();
+  }
+});
+
+render();
+</script>
+</body>
+</html>

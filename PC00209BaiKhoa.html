@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BÀI 9 - BÀI KHÓA</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh; font-family:Arial,"Microsoft YaHei",sans-serif;
+  background:linear-gradient(135deg,#eef4ff,#f9fbff);
+  display:flex; justify-content:center; color:#202124;
+}
+.app{width:min(900px,96vw); padding:20px 0 30px}
+h1{text-align:center;margin:0 0 6px;font-size:32px}
+.subtitle{text-align:center;color:#666;margin-bottom:14px;font-size:18px}
+.progress{text-align:center;font-size:18px;color:#666;margin-bottom:12px}
+.card-wrap{perspective:1200px; cursor:pointer}
+.card{
+  width:100%; height:750px; position:relative; transform-style:preserve-3d;
+  transition:transform .55s ease;
+}
+.card.flipped{transform:rotateY(180deg)}
+.face{
+  position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  border-radius:24px; background:white; box-shadow:0 12px 35px rgba(30,60,100,.15);
+  display:flex; flex-direction:column; justify-content:space-between;
+  padding:32px 36px; border:1px solid #e6eaf0; overflow:hidden;
+}
+.back{transform:rotateY(180deg)}
+
+.card-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.context-title {
+  font-weight: bold;
+  margin-bottom: 20px;
+  font-size: 22px;
+  color: #2c3e50;
+  line-height: 1.5;
+  border-bottom: 2px solid #edf2f7;
+  padding-bottom: 12px;
+}
+.dialogue-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.dialogue-table td {
+  vertical-align: top;
+  padding: 10px 0;
+}
+.speaker-col {
+  width: 140px;
+  color: #000000;
+  font-weight: bold;
+  font-size: 24px;
+  white-space: nowrap;
+}
+.speaker-col-front {
+  width: 140px;
+  color: #718096;
+  font-weight: bold;
+  font-size: 40.5px;
+  white-space: nowrap;
+}
+.speech-col {
+  color: #e53e3e;
+  font-weight: bold;
+  font-size: 40.5px;
+  line-height: 1.5;
+}
+.speech-col-back {
+  color: #e53e3e;
+  font-weight: bold;
+  font-size: 27px;
+  line-height: 1.5;
+}
+.pinyin-block {
+  color: #718096;
+  font-weight: bold;
+  font-size: 22px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  display: block;
+}
+.meaning-text {
+  font-size: 21px;
+  color: #4b5563;
+  font-weight: normal;
+  margin-top: 4px;
+}
+
+.audio-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 22px;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+  vertical-align: middle;
+}
+.audio-btn:hover {
+  background-color: #edf2f7;
+}
+
+.hint{color:#888; font-size:18px; text-align:center; margin-top:14px}
+.controls{display:flex;gap:16px;justify-content:center;margin-top:22px}
+button{
+  border:0;border-radius:14px;padding:16px 26px;font-size:20px;
+  cursor:pointer;background:#e9eef7;color:#233044;
+}
+button.primary{background:#2563eb;color:white}
+button:hover{filter:brightness(.97)}
+.extra{display:flex;justify-content:center;gap:10px;margin-top:14px}
+.shuffle{background:#e9f8ef}
+
+@media(max-width:600px){
+ .app{padding-top:16px}.card{height:780px}
+ .face{padding:22px 20px}
+ .context-title{font-size:18px; margin-bottom:14px}
+ .speaker-col{width:100px; font-size:18px}
+ .speaker-col-front{width:100px; font-size:30px}
+ .speech-col{font-size:30px}
+ .speech-col-back{font-size:20px}
+ .pinyin-block{font-size:17px;}
+ .meaning-text{font-size:16px}
+ .controls button{padding:12px 16px; font-size:16px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>🇨🇳 BÀI 9 - BÀI KHÓA</h1>
+
+  <div class="progress" id="progress"></div>
+
+  <div class="card-wrap" id="cardWrap" onclick="flipCard()">
+    <div class="card" id="card">
+      <div class="face front">
+        <div class="card-content" id="frontContent"></div>
+      </div>
+      <div class="face back">
+        <div class="card-content" id="backContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button onclick="event.stopPropagation();prevCard()">← Trước</button>
+    <button class="primary" onclick="event.stopPropagation();flipCard()">Lật thẻ</button>
+    <button onclick="event.stopPropagation();nextCard()">Tiếp →</button>
+  </div>
+  <div class="extra">
+    <button class="shuffle" onclick="event.stopPropagation();shuffleCards()">🔀 Trộn thẻ</button>
+  </div>
+</div>
+
+<script>
+const originalCards = [
+  {
+    "frontContext": "BÀI KHÓA 1: Bàn về việc mua điện thoại",
+    "frontLines": [
+      { "speaker": "飞龙:", "speech": "我想换个新手机，去哪里买比较好？" },
+      { "speaker": "黄勇:", "speech": "离学校不远有个苏宁电器商城，那里手机品种很多，可以去那里逛逛。" },
+      { "speaker": "飞龙:", "speech": "这个苏宁电器商城怎么走？" },
+      { "speaker": "黄勇:", "speech": "要不这样吧，我正好要买电脑，我陪你去一趟。" },
+      { "speaker": "飞龙:", "speech": "那太好了，你顺便帮我讲讲价。" },
+      { "speaker": "黄勇:", "speech": "那是中国最大的电器连锁店，全国价格统一，不讲价。" },
+      { "speaker": "飞龙:", "speech": "那价格是不是挺贵呢？" },
+      { "speaker": "黄勇:", "speech": "不贵，跟网店的价格差不多。品种很多，有便宜的。" },
+      { "speaker": "飞龙:", "speech": "我只想买个一千多的。" }
+    ],
+    "backLines": [
+      { "speaker": "飞龙:", "speech": "我想换个新手机，去哪里买比较好？", "pinyin": "Wǒ xiǎng huàn gè xīn shǒujī, qù nǎlǐ mǎi bǐjiào hǎo?", "meaning": "Tôi muốn đổi một chiếc điện thoại mới, đi đâu mua thì tốt hơn?" },
+      { "speaker": "黄勇:", "speech": "离学校不远有个苏宁电器商城，那里手机品种很多，可以去那里逛逛。", "pinyin": "Lí xuéxiào bù yuǎn yǒu gè Sūníng diànqì shāngchéng, nàlǐ shǒujī pǐnzhǒng hěn duō, kěyǐ qù nàlǐ guàngguang.", "meaning": "Cách trường học không xa có một trung tâm điện máy Suning, ở đó có rất nhiều loại điện thoại, có thể đến đó dạo một chút." },
+      { "speaker": "飞龙:", "speech": "这个苏宁电器商城怎么走？", "pinyin": "Zhège Sūníng diànqì shāngchéng zěnme zǒu?", "meaning": "Trung tâm điện máy Suning này đi như thế nào?" },
+      { "speaker": "黄勇:", "speech": "要不这样吧，我正好要买电脑，我陪你去一趟。", "pinyin": "Yàobù zhèyàng ba, wǒ zhènghǎo yào mǎi diànnǎo, wǒ péi nǐ qù yí tàng.", "meaning": "Hay là thế này đi, tôi vừa hay muốn mua máy tính, tôi đi cùng bạn một chuyến." },
+      { "speaker": "飞龙:", "speech": "那太好了，你顺便帮我讲讲价。", "pinyin": "Nà tài hǎo le, nǐ shùnbiàn bāng wǒ jiǎngjiǎng jià.", "meaning": "Vậy thì tốt quá, bạn tiện thể giúp tôi trả giá nhé." },
+      { "speaker": "黄勇:", "speech": "那是中国最大的电器连锁店，全国价格统一，不讲价。", "pinyin": "Nà shì Zhōngguó zuì dà de diànqì liánsuǒdiàn, quánguó jiàgé tǒngyī, bù jiǎngjià.", "meaning": "Đó là chuỗi cửa hàng điện máy lớn nhất Trung Quốc, giá cả toàn quốc thống nhất, không trả giá." },
+      { "speaker": "飞龙:", "speech": "那价格是不是挺贵呢？", "pinyin": "Nà jiàgé shì bú shì tǐng guì ne?", "meaning": "Vậy giá cả có phải khá đắt không?" },
+      { "speaker": "黄勇:", "speech": "不贵，跟网店的价格差不多。品种很多，有便宜的。", "pinyin": "Bú guì, gēn wǎngdiàn de jiàgé chàbuduō. Pǐnzhǒng hěn duō, yǒu piányi de.", "meaning": "Không đắt, giá cả so với cửa hàng online. Chủng loại rất nhiều, có loại rẻ." },
+      { "speaker": "飞龙:", "speech": "我只想买个一千多的。", "pinyin": "Wǒ zhǐ xiǎng mǎi gè yìqiān duō de.", "meaning": "Tôi chỉ muốn mua một chiếc hơn một nghìn thôi." }
+    ]
+  },
+  {
+    "frontContext": "BÀI KHÓA 2: Bàn về chợ đầu mối và mua sắm online",
+    "frontLines": [
+      { "speaker": "A:", "speech": "听说附近新开了个批发市场，卖的都是日常生活用品。" },
+      { "speaker": "B:", "speech": "你是不是又想花钱了？" },
+      { "speaker": "A:", "speech": "批发市场里东西便宜，还能讲价，花不了多少钱。" },
+      { "speaker": "B:", "speech": "小心点儿吧，在批发市场买东西可能会受骗。" },
+      { "speaker": "A:", "speech": "那可不一定，要不你陪我去瞧瞧。" },
+      { "speaker": "B:", "speech": "你真不用去了，那儿我去过，东西真不如大商场的好。" },
+      { "speaker": "A:", "speech": "这我知道，一分价钱一分货嘛。" },
+      { "speaker": "B:", "speech": "要想便宜可以在网上买啊，还不用自己跑过去，再大包小包地拎回来。" },
+      { "speaker": "A:", "speech": "这你就不懂了，网购不如逛市场有乐趣。" }
+    ],
+    "backLines": [
+      { "speaker": "A:", "speech": "听说附近新开了个批发市场，卖的都是日常生活用品。", "pinyin": "Tīngshuō fùjìn xīn kāile gè pīfā shìchǎng, mài de dōu shì rìcháng shēnghuó yòngpǐn.", "meaning": "Nghe nói gần đây mới mở một chợ đầu mối, bán toàn là đồ dùng sinh hoạt hàng ngày." },
+      { "speaker": "B:", "speech": "你是不是又想花钱了？", "pinyin": "Nǐ shì bú shì yòu xiǎng huāqián le?", "meaning": "Có phải bạn lại muốn tiêu tiền rồi không?" },
+      { "speaker": "A:", "speech": "批发市场里东西便宜，还能讲价，花不了多少钱。", "pinyin": "Pīfā shìchǎng lǐ dōngxi piányi, hái néng jiǎngjià, huā bù liǎo duōshao qián.", "meaning": "Đồ trong chợ đầu mối rẻ, còn có thể trả giá, không tốn bao nhiêu tiền đâu." },
+      { "speaker": "B:", "speech": "小心点儿吧，在批发市场买东西可能会受骗。", "pinyin": "Xiǎoxīn diǎnr ba, zài pīfā shìchǎng mǎi dōngxi kěnéng huì shòupiàn.", "meaning": "Cẩn thận một chút đi, mua đồ ở chợ đầu mối có thể bị lừa đấy." },
+      { "speaker": "A:", "speech": "那可不一定，要不你陪我去瞧瞧。", "pinyin": "Nà kě bù yídìng, yàobù nǐ péi wǒ qù qiáoqiao.", "meaning": "Cái đó không chắc đâu, hay là bạn đi cùng tôi xem thử đi." },
+      { "speaker": "B:", "speech": "你真不用去了，那儿我去过，东西真不如大商场的好。", "pinyin": "Nǐ zhēn búyòng qù le, nàr wǒ qùguo, dōngxi zhēn bùrú dà shāngchǎng de hǎo.", "meaning": "Bạn thật sự không cần đi đâu, chỗ đó tôi từng đến rồi, đồ thật sự không tốt bằng trung tâm thương mại lớn." },
+      { "speaker": "A:", "speech": "这我知道，一分价钱一分货嘛。", "pinyin": "Zhè wǒ zhīdào, yì fēn jiàqián yì fēn huò ma.", "meaning": "Cái này tôi biết, tiền nào của nấy mà." },
+      { "speaker": "B:", "speech": "要想便宜可以在网上买啊，还不用自己跑过去，再大包小包地拎回来。", "pinyin": "Yào xiǎng piányi kěyǐ zài wǎngshàng mǎi a, hái búyòng zìjǐ pǎo guòqù, zài dà bāo xiǎo bāo de līn huílái.", "meaning": "Muốn rẻ thì có thể mua trên mạng mà, còn không cần tự mình chạy đến đó, rồi túi lớn túi nhỏ xách về." },
+      { "speaker": "A:", "speech": "这你就不懂了，网购不如逛市场有乐趣。", "pinyin": "Zhè nǐ jiù bù dǒng le, wǎnggòu bùrú guàng shìchǎng yǒu lèqù.", "meaning": "Cái này bạn không hiểu rồi, mua sắm online không vui bằng đi dạo chợ." }
+    ]
+  },
+  {
+    "frontContext": "BÀI KHÓA 3: Mua sắm ngày nay",
+    "frontLines": [
+      { "speaker": "旁白:", "speech": "现在买东西越来越方便了，有大商场，有超市，有小商店，还有各种各样的批发市场。" },
+      { "speaker": "旁白:", "speech": "如果没有时间逛商店，也可以上网，在网店买东西。" },
+      { "speaker": "旁白:", "speech": "网店卖什么的都有，吃的、穿的、用的，手机、电脑、家具……" },
+      { "speaker": "旁白:", "speech": "在网上选好想买的东西，下单付款，过两天快递公司就会把东西送到你家里。" },
+      { "speaker": "旁白:", "speech": "不过网购一定要小心，不小心就可能买到质量不好的东西。" }
+    ],
+    "backLines": [
+      { "speaker": "旁白:", "speech": "现在买东西越来越方便了，有大商场，有超市，有小商店，还有各种各样的批发市场。", "pinyin": "Xiànzài mǎi dōngxi yuèláiyuè fāngbiàn le, yǒu dà shāngchǎng, yǒu chāoshì, yǒu xiǎo shāngdiàn, hái yǒu gè zhǒng gè yàng de pīfā shìchǎng.", "meaning": "Bây giờ mua đồ ngày càng tiện lợi, có trung tâm thương mại lớn, có siêu thị, có cửa hàng nhỏ, còn có đủ loại chợ đầu mối." },
+      { "speaker": "旁白:", "speech": "如果没有时间逛商店，也可以上网，在网店买东西。", "pinyin": "Rúguǒ méiyǒu shíjiān guàng shāngdiàn, yě kěyǐ shàngwǎng, zài wǎngdiàn mǎi dōngxi.", "meaning": "Nếu không có thời gian đi dạo cửa hàng, cũng có thể lên mạng, mua đồ ở cửa hàng online." },
+      { "speaker": "旁白:", "speech": "网店卖什么的都有，吃的、穿的、用的，手机、电脑、家具……", "pinyin": "Wǎngdiàn mài shénme de dōu yǒu, chī de, chuān de, yòng de, shǒujī, diànnǎo, jiājù…", "meaning": "Cửa hàng online bán gì cũng có, đồ ăn, đồ mặc, đồ dùng, điện thoại, máy tính, đồ nội thất…" },
+      { "speaker": "旁白:", "speech": "在网上选好想买的东西，下单付款，过两天快递公司就会把东西送到你家里。", "pinyin": "Zài wǎngshàng xuǎnhǎo xiǎng mǎi de dōngxi, xiàdān fùkuǎn, guò liǎng tiān kuàidì gōngsī jiù huì bǎ dōngxi sòng dào nǐ jiā lǐ.", "meaning": "Chọn kỹ thứ muốn mua trên mạng, đặt hàng và thanh toán, qua hai ngày công ty chuyển phát nhanh sẽ giao đồ đến nhà bạn." },
+      { "speaker": "旁白:", "speech": "不过网购一定要小心，不小心就可能买到质量不好的东西。", "pinyin": "Búguò wǎnggòu yídìng yào xiǎoxīn, bù xiǎoxīn jiù kěnéng mǎi dào zhìliàng bù hǎo de dōngxi.", "meaning": "Nhưng mua sắm online nhất định phải cẩn thận, không cẩn thận là có thể mua phải đồ chất lượng không tốt." }
+    ]
+  }
+];
+
+let cards = [...originalCards];
+let index = 0;
+let flipped = false;
+
+function speakText(event, text) {
+  event.stopPropagation();
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = 0.9;
+    window.speechSynthesis.speak(utterance);
+  } else {
+    alert('Trình duyệt của bạn không hỗ trợ tính năng phát âm.');
+  }
+}
+
+function render(){
+  const c = cards[index];
+  
+  let frontHtml = `<div class="context-title">${c.frontContext}</div><table class="dialogue-table">`;
+  c.frontLines.forEach(line => {
+    frontHtml += `
+      <tr>
+        <td class="speaker-col-front">${line.speaker}</td>
+        <td class="speech-col">
+          ${line.speech}
+          <button class="audio-btn" onclick="speakText(event, '${line.speech.replace(/'/g, "\\'")}')" title="Nghe phát âm">🔊</button>
+        </td>
+      </tr>`;
+  });
+  frontHtml += `</table>`;
+  document.getElementById('frontContent').innerHTML = frontHtml;
+
+  let backHtml = `<div class="context-title">${c.frontContext}</div><table class="dialogue-table">`;
+  c.backLines.forEach(line => {
+    backHtml += `
+      <tr>
+        <td class="speaker-col">${line.speaker}</td>
+        <td class="speech-col-back">
+          ${line.speech}
+          <button class="audio-btn" onclick="speakText(event, '${line.speech.replace(/'/g, "\\'")}')" title="Nghe phát âm">🔊</button>
+          <div class="pinyin-block">${line.pinyin}</div>
+          <div class="meaning-text">${line.meaning}</div>
+        </td>
+      </tr>`;
+  });
+  backHtml += `</table>`;
+  document.getElementById('backContent').innerHTML = backHtml;
+
+  document.getElementById('progress').textContent = `Thẻ ${index+1} / ${cards.length}`;
+  document.getElementById('card').classList.toggle('flipped', flipped);
+}
+
+function flipCard(){
+  flipped = !flipped;
+  document.getElementById('card').classList.toggle('flipped', flipped);
+}
+
+function nextCard(){
+  index = (index + 1) % cards.length;
+  flipped = false; render();
+}
+
+function prevCard(){
+  index = (index - 1 + cards.length) % cards.length;
+  flipped = false; render();
+}
+
+function shuffleCards(){
+  for(let i=cards.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [cards[i],cards[j]]=[cards[j],cards[i]];
+  }
+  index=0; flipped=false; render();
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight') nextCard();
+  else if(e.key==='ArrowLeft') prevCard();
+  else if(e.key===' ' || e.key==='Enter'){
+    e.preventDefault();
+    flipCard();
+  }
+});
+
+render();
+</script>
+</body>
+</html>
